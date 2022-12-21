@@ -1,4 +1,10 @@
 import { Navigate, useRoutes, useNavigate } from 'react-router-dom';
+import { useState,  } from 'react';
+import { useSelector } from 'react-redux';
+
+// 
+import { userInfoSelector } from './sections/auth/state/userSelectors';
+
 // layouts
 import DashboardLayout from './layouts/dashboard';
 import LogoOnlyLayout from './layouts/LogoOnlyLayout';
@@ -19,11 +25,17 @@ import Applications from "./pages/Applications"
 
 import InterviewerTests from "./pages/Interviewer-tests"
 import CandidateTests from "./pages/Candidate-tests"
-import Call from "./pages/Call"
+import InterviewerCall from "./pages/Interviewer-Call"
+import CandiateAttempTest from "./pages/Candidate-Attemp-tests";
+import ActivationPage from "./pages/ActivationPage";
+import InterviewerReports from "./pages/Interviewer-reports"
+import CandidateCall from "./pages/Candidate-Call"
+
 // ----------------------------------------------------------------------
 
 export default function Router() {
 
+  const userInfo =  useSelector(userInfoSelector)
   
   
   return useRoutes([
@@ -38,31 +50,36 @@ export default function Router() {
         { path: 'meetings/interviewer-meetings', element: <InterviewerMeetings /> },
         { path: 'jobs/your-jobs', element: <InterviewerJobs /> },
         { path: 'jobs/post-new-job', element: <PostJob /> },
+        { path: 'jobs/get-specific-job/:jobId', element: <PostJob /> },
         { path: 'jobs/for-you', element: <Jobs /> },
         { path: 'jobs/your-jobs/:id/applications', element: <Applications /> },
         { path: 'tests/your-tests', element: <InterviewerTests /> },
         { path: 'tests/candidate-tests', element: <CandidateTests /> },
-        { path: 'products', element: <Products /> },
+        { path: 'tests/attempt/:id', element: <CandiateAttempTest /> },
+        { path: 'reports/all', element: <InterviewerReports /> },
+        { path: 'reports/specific-report/:id', element: <DashboardApp /> },
       ],
     },
     {
       path: '/',
       // element: <LogoOnlyLayout />,
       children : [
-        { path: '/interview/:id', element:  <Call /> },
+        { path: '/interviewer-call/:meetingId', element:  <InterviewerCall /> },
+        { path: '/candidate-call/:meetingId/:connectionId', element:  <InterviewerCall /> },
       ]
     },
     {
       path: '/',
       element: <LogoOnlyLayout />,
       children: [
-        { path: '/', element: <Navigate to="/login" /> },
+        { path: 'activate/:token', element: <ActivationPage/> },
         { path: 'login', element: <Login /> },
         { path: 'register', element: <Register /> },
         { path: '404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" /> },
       ],
     },
+    { path: 'info', element: userInfo.role !== "candidate" ? <Navigate to="/info/interviewer-info" replace /> : <Navigate to="/info/candidate-info" replace />  },
     { path: '*', element: <Navigate to="/404" replace /> },
   ]);
 }

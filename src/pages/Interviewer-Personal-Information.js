@@ -1,12 +1,12 @@
 import * as Yup from 'yup';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 // form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 // @mui
-import { Stack, IconButton, Divider, Box } from '@mui/material';
+import { Stack, IconButton, Divider, Box, CircularProgress } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 // redux
@@ -14,9 +14,10 @@ import { useSelector } from 'react-redux';
 // components
 import Iconify from '../components/Iconify';
 import TagsComponent from '../components/Tags';
-import { FormProvider, RHFTextField, RHFCheckbox, RHFDateField } from '../components/hook-form';
+import { FormProvider, RHFTextField, RHFSelectField, RHFDateField } from '../components/hook-form';
 import { API_URL } from '../config';
 import { accessTokenSelector } from '../sections/auth/state/userSelectors';
+// import {  } from 'react';
 
 // ----------------------------------------------------------------------
 
@@ -27,18 +28,59 @@ const commonStyles = {
   // border: 1,
 };
 
+const qualificfationOptions = [
+  { value: 'phd/doctrate', label: 'PHD/DOCTRATE' },
+  { value: 'masters', label: 'MASTERS' },
+  { value: 'becholars', label: 'BACHOLARS' },
+  { value: 'pharm-d', label: 'PHARM-D' },
+  { value: 'mbbs/bds', label: 'MBBS/BDS' },
+  { value: 'm-phil', label: 'M-PHILL' },
+  { value: 'intermediate', label: 'INTERMEDIATE' },
+  { value: 'matriculation/o-level', label: 'MATRICULATION/O-LEVEL' },
+  { value: 'certification', label: 'CERTIFICATION' },
+  { value: 'diploma', label: 'DIPLOMA' },
+  { value: 'shortcourse', label: 'SHORTCOURSE' },
+];
+
+const ownershipOptions = [
+  { value: 'partnership', label: 'PARTNER-SHIP' },
+  { value: 'soleproperitership', label: 'SOLE-PROPERITERSHIP' },
+  { value: 'private', label: 'PRIVATE' },
+  { value: 'governemnt', label: 'GOVERNMENT' },
+];
+
 export default function InterviewerPersonalInformation() {
   const accessToken = useSelector(accessTokenSelector);
 
   const navigate = useNavigate();
-
-  // const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  // const [educationalNumber, setEducationalNumber] = useState(2);
-  // const [experinceNumber, setExperinceNumber] = useState(1);
-
-  const [skills, setSkills] = useState([]);
-  const [desiredJobTitles, setDesiredJobTitles] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [personalInfo, setPersonalInfo] = useState({
+    age: 18,
+    city: '',
+    phoneNumber: '',
+    address: '',
+    education: {
+      qualification: '',
+      instituteName: '',
+      completionYear: '',
+    },
+    company: {
+      companyName: '',
+      ceoName: '',
+      companyAddress: '',
+      companyDescription: '',
+      industry: '',
+      ownershipType: '',
+      employeesNo: 1,
+      origin: '',
+      operatingSince: new Date(),
+      officesNo: 1,
+      contactEmail: '',
+      contactNo: '',
+    },
+  });
+  const methodeRef = useRef(null)
 
   const RegisterSchema = Yup.object().shape({
     age: Yup.number().required('Age is required'),
@@ -92,59 +134,144 @@ export default function InterviewerPersonalInformation() {
     },
   };
 
-  const methods = useForm({
+  const methodes = useForm({
     resolver: yupResolver(RegisterSchema),
-    defaultValues,
+    defaultValues
   });
+
+  // methodeRef.curent 
+
 
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = methods;
+  } = methodes;
+
+  // const methods1 = useForm({
+  //   // resolver: yupResolver(RegisterSchema),
+  //   defaultValues: personalInfo
+  // });
+
+  // const { handleSubmit1 } = methods1;
 
   const onSubmit = async (values) => {
     setLoading(true);
 
-    console.log(values);
+    if (personalInfo._id) {
+      
+      axios
+        .patch(`${API_URL}/api/user/interviewer/${personalInfo._id}`, values, {
+          headers: {
+            Authorization: accessToken,
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
 
-    axios
-      .post(`${API_URL}/api/user/interviewer`, values, {
-        headers: {
-          Authorization: accessToken,
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-      });
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+    } else {
+      axios
+        .post(`${API_URL}/api/user/interviewer`, values, {
+          headers: {
+            Authorization: accessToken,
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+    }
 
     // navigate('/dashboard', { replace: true });
   };
 
-  return (
-    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+  const handleChange = (e) => {
+    const copyPersonalInfo = { ...personalInfo };
+    copyPersonalInfo[e.target.name] = e.target.value;
+    console.log(e.target.name, e.target.value);
+    setPersonalInfo(copyPersonalInfo);
+  };
+
+
+  useEffect(() => {
+
+    axios
+      .get(`${API_URL}/api/user/info/interviewer`, {
+        headers: {
+          Authorization: accessToken,
+        },
+      })
+      .then(({ data }) => {
+        console.log(data.data);
+        setPersonalInfo(data.data);
+        setFetchLoading(false);
+        methodes.reset(data.data)
+      })
+      .catch((error) => {
+        console.log(error);
+        setFetchLoading(false);
+      });
+  }, []);
+
+  return fetchLoading ? (
+    <Stack  fullWidth sx={{alignItems: "center"}}>
+      <CircularProgress sx={{ height: '80px', width: '80px', color: 'primary.dark' }} />
+    </Stack>
+  ) : (
+    <FormProvider methods={methodes} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={3}>
         <Divider>Personal Info</Divider>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <RHFTextField name="age" label="Age" type="number" />
-          <RHFTextField name="city" label="City" />
-          <RHFTextField name="phoneNumber" label="Phone #" />
+          <RHFTextField name="age" label="Age" type="number" 
+          // value={personalInfo.age} onChange={handleChange}
+           />
+          <RHFTextField name="city" label="City" 
+          // value={personalInfo.city} onChange={handleChange}
+           />
+          <RHFTextField name="phoneNumber" label="Phone #" 
+          // value={personalInfo.phoneNumber} onChange={handleChange}
+           />
         </Stack>
 
-        <RHFTextField name="address" label="Address" />
+        <RHFTextField name="address" label="Address" 
+        // value={personalInfo.address} onChange={handleChange}
+         />
 
         <Divider>Educational Info</Divider>
 
         <Box sx={{ ...commonStyles, borderRadius: '16px' }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ padding: '10px' }}>
-            <RHFTextField name="education.qualification" label="Qualification" />
-            <RHFTextField name="education.instituteName" label="Institute" />
-            <RHFTextField name="education.completionYear" label="Completion Year" type="number" />
+            <RHFSelectField
+              name="education.qualification"
+              options={qualificfationOptions}
+              label="Qualification"
+              // value={personalInfo.education.qualification}
+              // onChange={handleChange}
+            />
+            {/* <RHFTextField name="education.qualification" label="Qualification" /> */}
+            <RHFTextField
+              name="education.instituteName"
+              label="Institute"
+              // value={personalInfo.education.instituteName}
+              // onChange={handleChange}
+            />
+            <RHFTextField
+              name="education.completionYear"
+              label="Completion Year"
+              type="number"
+              // value={personalInfo.education.completionYear}
+              // onChange={handleChange}
+            />
           </Stack>
         </Box>
 
@@ -157,44 +284,114 @@ export default function InterviewerPersonalInformation() {
             // sx={{width:"94.5%"}}
           >
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="company.companyName" label="Company Name" />
-              <RHFTextField name="company.ceoName" label="CEO Name" />
-              <RHFTextField name="company.contactNo" label="Contact #" />
-              <RHFDateField name="company.operatingSince" label="Operating Scince" />
+              <RHFTextField name="company.companyName" label="Company Name" 
+              // value={personalInfo.company.companyName} 
+              />
+              <RHFTextField name="company.ceoName" label="CEO Name" 
+              // value={personalInfo.company.ceoName} 
+              />
+              <RHFTextField
+                name="company.contactNo"
+                label="Contact #"
+                // value={personalInfo.company.contactNo}
+                // onChange={handleChange}
+              />
+              <RHFDateField
+                name="company.operatingSince"
+                label="Operating Scince"
+                // value={personalInfo.company.operatingSince}
+                // onChange={handleChange}
+              />
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="company.companyAddress" label="Company Address" multiline />
+              <RHFTextField
+                name="company.companyAddress"
+                label="Company Address"
+                // value={personalInfo.company.companyAddress}
+                // onChange={handleChange}
+                multiline
+              />
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="company.contactEmail" label="Company Email" />
-              <RHFTextField name="company.ownershipType" label="Ownership Type" />
-              <RHFTextField name="company.industry" label="Industry" />
-              <RHFTextField name="company.origin" label="origin" />
+              <RHFTextField
+                name="company.contactEmail"
+                label="Company Email"
+                // value={personalInfo.company.contactEmail}
+                // onChange={handleChange}
+              />
+              <RHFSelectField
+                name="company.ownershipType"
+                options={ownershipOptions}
+                label="Ownership Type"
+                // value={personalInfo.company.ownershipType}
+                // onChange={handleChange}
+              />
+              <RHFTextField
+                name="company.industry"
+                label="Industry"
+                // value={personalInfo.company.industry}
+                // onChange={handleChange}
+              />
+              <RHFTextField
+                name="company.origin"
+                label="origin"
+                // value={personalInfo.company.origin}
+                // onChange={handleChange}
+              />
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '50%' }}>
-              <RHFTextField name="company.officesNo" label="Offices" type="number" />
-              <RHFTextField name="company.employeesNo" label="Employees" type="number" />
+              <RHFTextField
+                name="company.officesNo"
+                label="Offices"
+                type="number"
+                // value={personalInfo.company.officesNo}
+              />
+              <RHFTextField
+                name="company.employeesNo"
+                label="Employees"
+                type="number"
+                // value={personalInfo.company.employeesNo}
+              />
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="company.companyDescription" label="Company Description" multiline rows={5} />
+              <RHFTextField
+                name="company.companyDescription"
+                label="Company Description"
+                multiline
+                rows={5}
+                // value={personalInfo.company.companyDescription}
+              />
             </Stack>
           </Stack>
         </Box>
 
         <Stack direction="row" justifyContent="end" alignItems="flex-start">
-          <LoadingButton
-            size="large"
-            type="submit"
-            variant="contained"
-            loading={isSubmitting}
-            // disable={skills.length === 0 && desiredJobTitles.length === 0}
-          >
-            Save
-          </LoadingButton>
+          {personalInfo._id ? (
+            <LoadingButton
+              size="large"
+              type="submit"
+              // onClick={handleUpdate}
+              variant="contained"
+              loading={loading}
+              // disable={skills.length === 0 && desiredJobTitles.length === 0}
+            >
+              update
+            </LoadingButton>
+          ) : (
+            <LoadingButton
+              size="large"
+              type="submit"
+              variant="contained"
+              loading={loading}
+              // disable={skills.length === 0 && desiredJobTitles.length === 0}
+            >
+              Save
+            </LoadingButton>
+          )}
         </Stack>
       </Stack>
     </FormProvider>

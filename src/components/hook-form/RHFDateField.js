@@ -36,7 +36,7 @@ export default function RHFDateField({ type, name, label }) {
           {...field}
           label={label}
           value={field.value}
-          inputFormat="MMMM dd yyyy, h:mm:ss a"
+          inputFormat="MM dd yyyy, h:mm:ss a"
           renderInput={(params) => {
               
               if(value){
@@ -56,7 +56,7 @@ export default function RHFDateField({ type, name, label }) {
         <MobileDatePicker
           {...field}
           label={label}
-          inputFormat="dd/MMM/yyyy"
+          inputFormat="dd/MM/yyyy"
           value={field.value}
           renderInput={(params) => {
               

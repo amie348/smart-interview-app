@@ -64,7 +64,7 @@ export default function AccountPopover() {
     setOpen(null);
     const role = userInfo.role === 'candidate' ? 'interviewer' : 'candidate';
     dispatch(switchRole(role));
-    navigate('/');
+    navigate('/info');
   };
 
   return (

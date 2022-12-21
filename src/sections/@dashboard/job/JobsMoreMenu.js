@@ -7,7 +7,7 @@ import Iconify from '../../../components/Iconify';
 
 // ----------------------------------------------------------------------
 
-export default function JobMoreMenu({ _id }) {
+export default function JobMoreMenu({ _id , deleteJob}) {
   const ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -27,14 +27,14 @@ export default function JobMoreMenu({ _id }) {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem sx={{ color: 'text.secondary' }}>
+        <MenuItem sx={{ color: 'text.secondary' }} onClick={() => deleteJob(_id)}>
           <ListItemIcon>
             <Iconify icon="eva:trash-2-outline" width={24} height={24} sx={{ color: 'error.main' }} />
           </ListItemIcon>
           <ListItemText primary="Delete" primaryTypographyProps={{ variant: 'body2' }} />
         </MenuItem>
 
-        <MenuItem component={RouterLink} to="#" sx={{ color: 'text.secondary' }}>
+        <MenuItem component={RouterLink} to={`/jobs/get-specific-job/${_id}`} sx={{ color: 'text.secondary' }}>
           <ListItemIcon>
             <Iconify icon="eva:edit-fill" width={24} height={24} sx={{ color: 'success.main' }} />
           </ListItemIcon>

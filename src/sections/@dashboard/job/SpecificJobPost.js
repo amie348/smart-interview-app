@@ -8,6 +8,7 @@ import { SwipeableDrawer, Stack, Box, Avatar, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // components
 import Iconify from '../../../components/Iconify';
+import SnackbarBar from '../../../components/SnakBar';
 // others
 import { API_URL } from '../../../config';
 import { accessTokenSelector } from '../../auth/state/userSelectors';
@@ -22,55 +23,13 @@ import { accessTokenSelector } from '../../auth/state/userSelectors';
 // import MailIcon from '@mui/icons-material/Mail';
 
 export default function SpecificJobDrawer({ open, handleOpen, job }) {
+
   const accessToken = useSelector(accessTokenSelector);
   const [isLoading, setLoading] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const handleNotification = () => setShowNotification(!showNotification);
+  const [response , setResponse] = useState({})
 
-  // const toggleDrawer = (anchor, open) => (event) => {
-  //   if (
-  //     event &&
-  //     event.type === 'keydown' &&
-  //     (event.key === 'Tab' || event.key === 'Shift')
-  //   ) {
-  //     return;
-  //   }
-
-  //   setState({ ...state, [anchor]: open });
-  // };
-
-  // const list = (anchor) => (
-  //   <Box
-  //     sx={{ width: anchor === 'top' || anchor === 'bottom' ? 'auto' : 250 }}
-  //     role="presentation"
-  //     onClick={toggleDrawer(anchor, false)}
-  //     onKeyDown={toggleDrawer(anchor, false)}
-  //   >
-  //     <List>
-  //       {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-  //         <ListItem key={text} disablePadding>
-  //           <ListItemButton>
-  //             <ListItemIcon>
-  //               {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-  //             </ListItemIcon>
-  //             <ListItemText primary={text} />
-  //           </ListItemButton>
-  //         </ListItem>
-  //       ))}
-  //     </List>
-  //     <Divider />
-  //     <List>
-  //       {['All mail', 'Trash', 'Spam'].map((text, index) => (
-  //         <ListItem key={text} disablePadding>
-  //           <ListItemButton>
-  //             <ListItemIcon>
-  //               {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-  //             </ListItemIcon>
-  //             <ListItemText primary={text} />
-  //           </ListItemButton>
-  //         </ListItem>
-  //       ))}
-  //     </List>
-  //   </Box>
-  // );\
 
   useEffect(() => {
     console.log('job', job);
@@ -93,8 +52,17 @@ export default function SpecificJobDrawer({ open, handleOpen, job }) {
       )
       .then((response) => {
         console.log(response);
+        setResponse({status: 200, message: "Applied Successfully"})
+        handleNotification()
+
+        setInterval(() => {
+          handleOpen()
+        }, 1000)
+
       })
       .catch((error) => {
+        setResponse({status: 404, message: "Cannot Apply On this Job"})
+        handleNotification()
         console.log(error);
       });
 
@@ -252,6 +220,7 @@ export default function SpecificJobDrawer({ open, handleOpen, job }) {
           </Box>
         </SwipeableDrawer>
       </React.Fragment>
+      <SnackbarBar response={response} show={showNotification} handleClose={() => setShowNotification(false)} />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Iconify from '../../components/Iconify';
 
 // ----------------------------------------------------------------------
 
-const getIcon = (name) => <Iconify icon={name} width={22} height={22} />;
+const getIcon = (name) => <getIcon icon={name} width={22} height={22} />;
 
 const interviewerConfig = [
   // {
@@ -31,6 +31,11 @@ const interviewerConfig = [
     title: 'tests',
     path: '/tests/your-tests',
     icon: getIcon('material-symbols:quiz-outline-rounded'),
+  },
+  {
+    title: 'reports',
+    path: '/reports/all',
+    icon: getIcon('tabler:report'),
   }
   // {
   //   title: 'Not found',

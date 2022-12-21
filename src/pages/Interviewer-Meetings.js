@@ -18,6 +18,7 @@ import {
   Typography,
   TableContainer,
   TablePagination,
+  CircularProgress
 } from '@mui/material';
 // redux
 import { useSelector } from 'react-redux';
@@ -26,6 +27,7 @@ import Page from '../components/Page';
 import Label from '../components/Label';
 import Scrollbar from '../components/Scrollbar';
 import Iconify from '../components/Iconify';
+import SnackbarBar from "../components/SnakBar"
 import SearchNotFound from '../components/SearchNotFound';
 import { MeetingListHead, MeetingMoreMenu, MeetingModal } from '../sections/@dashboard/meeting';
 import { API_URL } from '../config';
@@ -85,50 +87,67 @@ export default function InterviewerMeetings() {
   const [orderBy, setOrderBy] = useState('name');
   const [filterName, setFilterName] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
   const [openModal, setOpenModal] = useState(false);
   const [meetings, setMeetings] = useState([]);
-
+  const [render, setRender] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
+  const handleNotification = () => setShowNotification(!showNotification);
+  const [response , setResponse] = useState({})
+  const handleRender = () => setRender(!render)
   const accessToken = useSelector(accessTokenSelector);
 
-  useEffect(() => {
-    const fetcMeeting = () => {
-      axios
-        .post(
-          `${API_URL}/api/meeting/get-interviewer-meetings`,
-          {},
-          {
-            headers: { authorization: accessToken },
-          }
-        )
-        .then(({ data }) => {
-          console.log(data.data.data);
-          setMeetings(data.data.data);
-        })
-        .catch((error) => {
-          console.log('error');
-        });
-    };
 
+  const fetcMeeting = () => {
+    setLoading(true)
+    axios
+      .post(
+        `${API_URL}/api/meeting/get-interviewer-meetings`,
+        {},
+        {
+          headers: { authorization: accessToken },
+        }
+      )
+      .then(({ data }) => {
+        console.log(data.data.data);
+        setLoading(false)
+        setMeetings(data.data.data);
+      })
+      .catch((error) => {
+        setLoading(false)
+        console.log(error);
+      });
+  };
+
+
+  useEffect(() => {
     fetcMeeting();
-  }, []);
+  }, [render]);
+
+  const deleteMeeting = (_id) => {
+
+    setLoading(true);
+    axios.delete(`${API_URL}/api/meeting/delete-interviewer-Specific/${_id}`, {
+      headers: { authorization: accessToken },
+    }).then(response => {
+
+      console.log("response", response);
+      fetcMeeting()
+      setResponse({status : 200, message: "Meeting Deleted Successfully"});
+      handleNotification()
+
+    }).catch(error => {
+
+      setLoading(true);
+      setResponse({status : 404, message: "Cannot Delete Meeting"})
+      console.log(error)
+
+    })
+
+  }
 
   const handleModal = () => setOpenModal(!openModal);
 
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
 
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
@@ -145,24 +164,12 @@ export default function InterviewerMeetings() {
     setSelected(newSelected);
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - meetings.length) : 0;
 
-  const handleFilterByName = (event) => {
-    setFilterName(event.target.value);
-  };
+  const filteredUsers = applySortFilter(meetings, getComparator(order, orderBy), filterName);
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
-
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
-
-  const isUserNotFound = filteredUsers.length === 0;
+  const isUserNotFound = meetings.length === 0;
 
   return (
     <Page title="Meetings">
@@ -176,88 +183,99 @@ export default function InterviewerMeetings() {
           </Button>
         </Stack>
 
-        <Card>
-          {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
+        {loading ? (
+          <Stack fullWidth sx={{ alignItems: 'center' }}>
+            <CircularProgress sx={{ height: '80px', width: '80px', color: 'primary.dark' }} />
+          </Stack>
+        ) : (
+          <Card>
+            {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
 
-          <Scrollbar>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <MeetingListHead
-                  // order={order}
-                  // orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={meetings.length}
-                  // onRequestSort={handleRequestSort}
-                  // onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-                  {meetings.length ? (
-                    meetings.map((row) => {
-                      const { _id, candidateUserEmail, expiryDate, password, company, startDate } = row;
-                      const isItemSelected = selected.indexOf(_id) !== -1;
-
-                      return (
-                        <TableRow
-                          hover
-                          key={_id}
-                          tabIndex={-1}
-                          role="checkbox"
-                          selected={isItemSelected}
-                          aria-checked={isItemSelected}
-                        >
-                          <TableCell padding="checkbox">
-                            <Checkbox checked={isItemSelected} onChange={(event) => handleClick(event, _id)} />
-                          </TableCell>
-                          <TableCell component="th" scope="row" padding="none">
-                            <Stack direction="row" alignItems="center" spacing={2} sx={{ paddingLeft: '5px' }}>
-                              {/* <Avatar alt={name} src={avatarUrl} /> */}
-                              <Typography variant="subtitle2" noWrap>
-                                {candidateUserEmail}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell align="center">{password}</TableCell>
-                          <TableCell align="center">{moment(startDate).format('h:mm a')}</TableCell>
-                          <TableCell align="center">{moment(startDate).format('MMMM Do YY')}</TableCell>
-                          <TableCell align="center">{moment(expiryDate).format('h:mm a')}</TableCell>
-                          <TableCell align="center">{moment(expiryDate).format('MMMM Do YY')}</TableCell>
-                          {/* <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell> */}
-                          <TableCell align="left">
-                            <Label variant="ghost" color={password ? 'error' : 'success'}>
-                              {'Not Started'}
-                            </Label>
-                          </TableCell>
-
-                          <TableCell align="right">
-                            <MeetingMoreMenu />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <span>No Meetings</span>
-                  )}
-                  {emptyRows > 0 && (
-                    <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
-
-                {isUserNotFound && (
+            <Scrollbar>
+              <TableContainer sx={{ minWidth: 800 }}>
+                <Table>
+                  <MeetingListHead
+                    // order={order}
+                    // orderBy={orderBy}
+                    headLabel={TABLE_HEAD}
+                    rowCount={meetings.length}
+                    // onRequestSort={handleRequestSort}
+                    // onSelectAllClick={handleSelectAllClick}
+                  />
                   <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <SearchNotFound searchQuery={filterName} />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
+                    {meetings.length
+                      ? meetings.map((row) => {
+                          const { _id, candidateUserEmail, expiryDate, password, company, startDate, status } = row;
+                          const isItemSelected = selected.indexOf(_id) !== -1;
 
-          <TablePagination
+                          return (
+                            <TableRow
+                              hover
+                              key={_id}
+                              tabIndex={-1}
+                              role="checkbox"
+                              selected={isItemSelected}
+                              aria-checked={isItemSelected}
+                            >
+                              <TableCell padding="checkbox">
+                                <Checkbox checked={isItemSelected} onChange={(event) => handleClick(event, _id)} />
+                              </TableCell>
+                              <TableCell component="th" scope="row" padding="none">
+                                <Stack direction="row" alignItems="center" spacing={2} sx={{ paddingLeft: '5px' }}>
+                                  {/* <Avatar alt={name} src={avatarUrl} /> */}
+                                  <Typography variant="subtitle2" noWrap>
+                                    {candidateUserEmail}
+                                  </Typography>
+                                </Stack>
+                              </TableCell>
+                              <TableCell align="center">{password}</TableCell>
+                              <TableCell align="center">{moment(startDate).format('h:mm a')}</TableCell>
+                              <TableCell align="center">{moment(startDate).format('Do MMM  YYYY')}</TableCell>
+                              <TableCell align="center">{moment(expiryDate).format('h:mm a')}</TableCell>
+                              <TableCell align="center">{moment(expiryDate).format(' Do MMM YYYY')}</TableCell>
+                              {/* <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell> */}
+                              <TableCell align="center">
+                                {moment(expiryDate).isAfter(moment()) ? (
+                                  <Label variant="ghost" color={status ? 'success' : 'warning'}>
+                                    {status === 'STARTED' || status === 'IN-PROGRESS' || status === 'ENDED'
+                                      ? status
+                                      : 'NOT STARTED'}
+                                  </Label>
+                                ) : (
+                                  <Label variant="ghost" color={'error'}>
+                                    EXPIRED
+                                  </Label>
+                                )}
+                              </TableCell>
+
+                              <TableCell align="right">
+                                <MeetingMoreMenu meeting={row} deleteMeeting={deleteMeeting} />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      : null}
+                    {emptyRows > 0 && (
+                      <TableRow style={{ height: 53 * emptyRows }}>
+                        <TableCell colSpan={6} />
+                      </TableRow>
+                    )}
+                  </TableBody>
+
+                  {isUserNotFound && (
+                    <TableBody>
+                      <TableRow>
+                        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                          <SearchNotFound searchQuery={filterName} />
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  )}
+                </Table>
+              </TableContainer>
+            </Scrollbar>
+
+            {/* <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
             count={USERLIST.length}
@@ -265,10 +283,12 @@ export default function InterviewerMeetings() {
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Card>
+          /> */}
+          </Card>
+        )}
       </Container>
-      {openModal ? <MeetingModal open={openModal} handleClose={handleModal} /> : null}
+      {openModal ? <MeetingModal open={openModal} handleClose={handleModal} handleRender={handleRender} /> : null}
+      <SnackbarBar response={response} show={showNotification} handleClose={() => setShowNotification(false)} />
     </Page>
   );
 }

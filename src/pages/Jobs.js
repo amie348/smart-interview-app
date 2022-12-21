@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link as RouterLink } from 'react-router-dom';
 // material
-import { Grid, Button, Container, Stack, Typography } from '@mui/material';
+import { Grid, Button, Container, Stack, Typography, CircularProgress } from '@mui/material';
 // redux
 import { useSelector } from 'react-redux';
 // components
@@ -30,9 +30,10 @@ export default function Jobs() {
 
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const handleOpenDrawer = (job) => {
-    if (job.salary) {
+    if (job?.salary) {
       setSelectedJob(job);
     } else {
       setSelectedJob({});
@@ -51,7 +52,12 @@ export default function Jobs() {
         })
         .then(({ data }) => {
           console.log(data.data.data);
+          setLoading(false);
           setJobs(data.data.data);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
         });
     };
 
@@ -59,35 +65,52 @@ export default function Jobs() {
   }, []);
 
   return (
-    <Page title="Dashboard: Jobs">
-      <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-          <Typography variant="h4" gutterBottom>
-            Best Jobs For You
-          </Typography>
-          {/* <Button variant="contained" component={RouterLink} to="#" startIcon={<Iconify icon="eva:plus-fill" />}>
+    <Page title="Jobs">
+      {loading ? (
+        <Stack fullWidth sx={{ alignItems: 'center' }}>
+          <CircularProgress sx={{ height: '80px', width: '80px', color: 'primary.dark' }} />
+        </Stack>
+      ) : (
+        <>
+          <Container>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+              <Typography variant="h4" gutterBottom>
+                Best Jobs For You
+              </Typography>
+              {/* <Button variant="contained" component={RouterLink} to="#" startIcon={<Iconify icon="eva:plus-fill" />}>
             New Post
           </Button> */}
-        </Stack>
+            </Stack>
 
-        {/* <Stack mb={5} direction="row" alignItems="center" justifyContent="space-between">
+            {/* <Stack mb={5} direction="row" alignItems="center" justifyContent="space-between">
           <BlogPostsSearch posts={POSTS} />
           <BlogPostsSort options={SORT_OPTIONS} />
         </Stack> */}
+            {
+              jobs.length ?
+              <Grid container spacing={3}>
+              {jobs.map((post, index) => (
+                <JobPostCard
+                  key={post._id}
+                  post={post}
+                  index={index}
+                  onSelect={handleOpenDrawer}
+                  setSelectedJob={setSelectedJob}
+                />
+              ))}
+            </Grid>
+            :
+              <Typography variant="h4" gutterBottom>
+                Sorry! No Jobs FOr You RIght Now, Visit Later
+              </Typography>
+            }
+            
 
-        <Grid container spacing={3}>
-          {jobs.map((post, index) => (
-            <JobPostCard
-              key={post._id}
-              post={post}
-              index={index}
-              onSelect={handleOpenDrawer}
-              setSelectedJob={setSelectedJob}
-            />
-          ))}
-        </Grid>
-      </Container>
-      <SpecificJobDrawer open={openDrawer} handleOpen={handleOpenDrawer} job={selectedJob} />
+
+          </Container>
+          <SpecificJobDrawer open={openDrawer} handleOpen={handleOpenDrawer} job={selectedJob} />
+        </>
+      )}
     </Page>
   );
 }

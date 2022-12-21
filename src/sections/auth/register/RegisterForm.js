@@ -12,11 +12,16 @@ import { LoadingButton } from '@mui/lab';
 import Iconify from '../../../components/Iconify';
 import { FormProvider, RHFTextField, RHFCheckbox } from '../../../components/hook-form';
 import { API_URL } from '../../../config';
+import SnackbarBar from "../../../components/SnakBar"
 
 // ----------------------------------------------------------------------
 
 export default function RegisterForm() {
   const navigate = useNavigate();
+
+  const [showNotification, setShowNotification] = useState(false);
+  const handleNotification = () => setShowNotification(!showNotification);
+  const [response , setResponse] = useState({})
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false)
@@ -50,11 +55,21 @@ export default function RegisterForm() {
     .then(response => {
 
       console.log(response.data)
+      setResponse(response)
+      handleNotification()
       setLoading(false)
 
+      
     }).catch(error => {
 
-      console.log(error)
+      if(error.message === "Network Error") {
+
+        setResponse({status: 505})
+        handleNotification()        
+        
+      }
+      setResponse(error.response)
+      handleNotification()
       setLoading(false)
 
     })
@@ -65,6 +80,7 @@ export default function RegisterForm() {
   };
 
   return (
+    <>
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={3}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -94,5 +110,7 @@ export default function RegisterForm() {
         </LoadingButton>
       </Stack>
     </FormProvider>
+    <SnackbarBar response={response} show={showNotification} handleClose={() => setShowNotification(false)} />
+    </>
   );
 }

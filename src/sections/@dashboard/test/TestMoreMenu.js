@@ -7,7 +7,7 @@ import Iconify from '../../../components/Iconify';
 
 // ----------------------------------------------------------------------
 
-export default function TestMoreMenu() {
+export default function TestMoreMenu({test, deleteTest}) {
   const ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -29,7 +29,7 @@ export default function TestMoreMenu() {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem sx={{ color: 'text.secondary' }}>
+        <MenuItem sx={{ color: 'text.secondary' }} onClick={() => deleteTest(test._id)}>
           <ListItemIcon>
             <Iconify icon="eva:trash-2-outline" width={24} height={24} sx={{ color: 'error.main' }}/>
           </ListItemIcon>

@@ -36,6 +36,8 @@ const PRIMARY = {
   dark: '#103996',
   darker: '#061B64',
   contrastText: '#fff',
+  transparent: alpha('#2065D1', 0.15)
+
 };
 
 const SECONDARY = {
@@ -63,6 +65,7 @@ const SUCCESS = {
   dark: '#229A16',
   darker: '#08660D',
   contrastText: GREY[800],
+  transparent: alpha('#54D62C', 0.15)
 };
 
 const WARNING = {

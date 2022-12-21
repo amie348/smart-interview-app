@@ -18,6 +18,7 @@ import {
   Typography,
   TableContainer,
   TablePagination,
+  CircularProgress,
 } from '@mui/material';
 // redux
 import { useSelector } from 'react-redux';
@@ -27,6 +28,7 @@ import Label from '../components/Label';
 import Scrollbar from '../components/Scrollbar';
 import Iconify from '../components/Iconify';
 import SearchNotFound from '../components/SearchNotFound';
+import SnackbarBar from '../components/SnakBar';
 import { TestListHead, TestMoreMenu, TestModal } from '../sections/@dashboard/test/index';
 import { API_URL } from '../config';
 // mock
@@ -85,10 +87,36 @@ export default function InterviewerTests() {
   const [filterName, setFilterName] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const [render, setRender] = useState(false);
+  const handleRender = () => setRender(!render);
   const [openModal, setOpenModal] = useState(false);
   const [tests, setTests] = useState([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const handleNotification = () => setShowNotification(!showNotification);
+  const [response, setResponse] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const accessToken = useSelector(accessTokenSelector);
+
+  const deleteTest = (_id) => {
+    setLoading(true);
+    axios
+      .delete(`${API_URL}/api/meeting/tests/delete-specific/${_id}`, {
+        headers: { authorization: accessToken },
+      })
+      .then((response) => {
+        console.log('response', response);
+        setResponse({ status: 200, message: 'Test Deleted Successfully' });
+        handleNotification();
+        handleRender();
+      })
+      .catch((error) => {
+        setLoading(false);
+        setResponse({ status: 404, message: 'Cannot Delete Test' });
+        handleNotification();
+        console.log(error);
+      });
+  };
 
   useEffect(() => {
     const fetchTests = () => {
@@ -103,31 +131,19 @@ export default function InterviewerTests() {
         .then(({ data }) => {
           console.log("interviewer's tests", data.data);
           setTests(data.data);
+          setLoading(false)
         })
         .catch((error) => {
+          setLoading(false)
           console.log('error');
         });
     };
 
     fetchTests();
-  }, []);
+  }, [render]);
 
   const handleModal = () => setOpenModal(!openModal);
 
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
 
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
@@ -153,15 +169,11 @@ export default function InterviewerTests() {
     setPage(0);
   };
 
-  const handleFilterByName = (event) => {
-    setFilterName(event.target.value);
-  };
-
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
 
   const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
 
-  const isUserNotFound = filteredUsers.length === 0;
+  const isUserNotFound = tests.length === 0;
 
   return (
     <Page title="Meetings">
@@ -175,97 +187,104 @@ export default function InterviewerTests() {
           </Button>
         </Stack>
 
-        <Card>
-          {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
+        {loading ? (
+          <Stack fullWidth sx={{ alignItems: 'center' }}>
+            <CircularProgress sx={{ height: '80px', width: '80px', color: 'primary.dark' }} />
+          </Stack>
+        ) : (
+          <Card>
+            {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
 
-          <Scrollbar>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <TestListHead
-                  // order={order}
-                  // orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={tests.length}
-                  // onRequestSort={handleRequestSort}
-                  // onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-                  {tests.length ? (
-                    tests.map((row) => {
-                      const { _id, title, pin, amount, time, expiryDate, attempted } = row;
-                      const isItemSelected = selected.indexOf(_id) !== -1;
-
-                      return (
-                        <TableRow
-                          hover
-                          key={_id}
-                          tabIndex={-1}
-                          role="checkbox"
-                          selected={isItemSelected}
-                          aria-checked={isItemSelected}
-                        >
-                          <TableCell padding="checkbox">
-                            <Checkbox checked={isItemSelected} onChange={(event) => handleClick(event, _id)} />
-                          </TableCell>
-                          <TableCell component="th" scope="row" padding="none">
-                            <Stack direction="row" alignItems="center" spacing={2} sx={{ paddingLeft: '5px' }}>
-                              {/* <Avatar alt={name} src={avatarUrl} /> */}
-                              <Typography variant="subtitle2" noWrap>
-                                {title}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell align="center">{pin}</TableCell>
-                          <TableCell align="center">{amount}</TableCell>
-                          <TableCell align="center">{time} min</TableCell>
-                          <TableCell align="center">{moment(expiryDate).format('MMMM Do YY, h:mm a')}</TableCell>
-                          <TableCell align="center">
-                            <Label variant="ghost" color={attempted ? 'success' : 'warning'}>
-                              {attempted ? 'Attempted' : 'Not Attempted'}
-                            </Label>
-                          </TableCell>
-
-                          <TableCell align="right">
-                            <TestMoreMenu />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <span>No Tests</span>
-                  )}
-                  {emptyRows > 0 && (
-                    <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
-
-                {isUserNotFound && (
+            <Scrollbar>
+              <TableContainer sx={{ minWidth: 800 }}>
+                <Table>
+                  <TestListHead
+                    // order={order}
+                    // orderBy={orderBy}
+                    headLabel={TABLE_HEAD}
+                    rowCount={tests.length}
+                    // onRequestSort={handleRequestSort}
+                    // onSelectAllClick={handleSelectAllClick}
+                  />
                   <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <SearchNotFound searchQuery={filterName} />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
+                    {tests.length ? (
+                      tests.map((row) => {
+                        const { _id, title, pin, amount, time, expiryDate, attempted } = row;
+                        const isItemSelected = selected.indexOf(_id) !== -1;
 
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={USERLIST.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Card>
+                        return (
+                          <TableRow
+                            hover
+                            key={_id}
+                            tabIndex={-1}
+                            role="checkbox"
+                            selected={isItemSelected}
+                            aria-checked={isItemSelected}
+                          >
+                            <TableCell padding="checkbox">
+                              <Checkbox checked={isItemSelected} onChange={(event) => handleClick(event, _id)} />
+                            </TableCell>
+                            <TableCell component="th" scope="row" padding="none">
+                              <Stack direction="row" alignItems="center" spacing={2} sx={{ paddingLeft: '5px' }}>
+                                {/* <Avatar alt={name} src={avatarUrl} /> */}
+                                <Typography variant="subtitle2" noWrap>
+                                  {title}
+                                </Typography>
+                              </Stack>
+                            </TableCell>
+                            <TableCell align="center">{pin}</TableCell>
+                            <TableCell align="center">{amount}</TableCell>
+                            <TableCell align="center">{time} min</TableCell>
+                            <TableCell align="center">{moment(expiryDate).format('MMMM Do YY, h:mm a')}</TableCell>
+                            <TableCell align="center">
+                              <Label variant="ghost" color={attempted ? 'success' : 'warning'}>
+                                {attempted ? 'Attempted' : 'Not Attempted'}
+                              </Label>
+                            </TableCell>
+
+                            <TableCell align="right">
+                              <TestMoreMenu test={row} deleteTest={deleteTest} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      null
+                    )}
+                    {emptyRows > 0 && (
+                      <TableRow style={{ height: 53 * emptyRows }}>
+                        <TableCell colSpan={6} />
+                      </TableRow>
+                    )}
+                  </TableBody>
+
+                  {isUserNotFound && (
+                    <TableBody>
+                      <TableRow>
+                        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                          <SearchNotFound searchQuery={filterName} />
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  )}
+                </Table>
+              </TableContainer>
+            </Scrollbar>
+
+            {/* <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={USERLIST.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            /> */}
+          </Card>
+        )}
       </Container>
-      {openModal ? <TestModal open={openModal} handleClose={handleModal} /> : null}
+      {openModal ? <TestModal open={openModal} handleClose={handleModal} handleRender={handleRender} /> : null}
+      <SnackbarBar response={response} show={showNotification} handleClose={() => setShowNotification(false)} />
     </Page>
   );
 }

@@ -30,7 +30,7 @@ import { API_URL } from '../../../config';
 import { accessTokenSelector } from '../../auth/state/userSelectors';
 import Iconify from '../../../components/Iconify';
 
-export default function MeetingModal({ open, handleClose, ...other }) {
+export default function MeetingModal({ open, handleClose, handleRender, ...other }) {
   // const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -134,6 +134,8 @@ export default function MeetingModal({ open, handleClose, ...other }) {
       .then((response) => {
         console.log(response.data);
         setLoading(false);
+        handleRender();
+        handleClose()
       })
       .catch((error) => {
         console.log(error);

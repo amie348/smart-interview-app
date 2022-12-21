@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 // @mui
 import { styled } from '@mui/material/styles';
@@ -10,6 +11,7 @@ import Logo from '../components/Logo';
 // sections
 import { LoginForm } from '../sections/auth/login';
 import AuthSocial from '../sections/auth/AuthSocial';
+
 
 // ----------------------------------------------------------------------
 
@@ -57,6 +59,9 @@ const ContentStyle = styled('div')(({ theme }) => ({
 // ----------------------------------------------------------------------
 
 export default function Login() {
+
+
+
   const smUp = useResponsive('up', 'sm');
 
   const mdUp = useResponsive('up', 'md');
@@ -79,7 +84,7 @@ export default function Login() {
 
         {mdUp && (
           <SectionStyle>
-            <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
+              <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
               Hi, Welcome Back
             </Typography>
             <img src="/static/illustrations/illustration_login.png" alt="login" />
@@ -89,7 +94,7 @@ export default function Login() {
         <Container maxWidth="sm">
           <ContentStyle>
             <Typography variant="h4" gutterBottom>
-              Sign in to Smart Interview
+              log in to Smart Interview
             </Typography>
 
             <Typography sx={{ color: 'text.secondary', mb: 5 }}>Enter your details below.</Typography>

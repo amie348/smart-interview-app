@@ -90,7 +90,7 @@ function NavItem({ item, active }) {
           <Iconify
             icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
             sx={{ width: 16, height: 16, ml: 1 }}
-          />
+          />  
         </ListItemStyle>
 
         <Collapse in={open} timeout="auto" unmountOnExit>

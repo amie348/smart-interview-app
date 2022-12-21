@@ -26,18 +26,18 @@ import Iconify from '../../../components/Iconify';
 
 
 
-export default function TestModal({ open, handleClose, ...other}) {
+export default function TestModal({ open, handleClose, handleRender }) {
   
   // const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const accessToken = useSelector(accessTokenSelector)
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    console.log(other, "other")
+  //   console.log(other, "other")
 
-  },[other])
+  // },[other])
 
 
   const topicOptions = [
@@ -197,6 +197,8 @@ export default function TestModal({ open, handleClose, ...other}) {
 
       console.log("creating test response",response.data)
       setLoading(false)
+      handleClose()
+      handleRender()
 
     }).catch(error => {
 

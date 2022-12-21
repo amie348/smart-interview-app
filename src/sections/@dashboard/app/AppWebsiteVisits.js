@@ -8,19 +8,19 @@ import { BaseOptionChart } from '../../../components/chart';
 
 // ----------------------------------------------------------------------
 
-AppWebsiteVisits.propTypes = {
-  title: PropTypes.string,
-  subheader: PropTypes.string,
-  chartData: PropTypes.array.isRequired,
-  chartLabels: PropTypes.arrayOf(PropTypes.string).isRequired,
-};
+// AppWebsiteVisits.propTypes = {
+//   title: PropTypes.string,
+//   subheader: PropTypes.string,
+//   chartData: PropTypes.array.isRequired,
+//   chartLabels: PropTypes.arrayOf(PropTypes.string).isRequired,
+// };
 
 export default function AppWebsiteVisits({ title, subheader, chartLabels, chartData, ...other }) {
   const chartOptions = merge(BaseOptionChart(), {
     plotOptions: { bar: { columnWidth: '16%' } },
     fill: { type: chartData.map((i) => i.fill) },
     labels: chartLabels,
-    xaxis: { type: 'datetime' },
+    xaxis: { type: 'string' },
     tooltip: {
       shared: true,
       intersect: false,

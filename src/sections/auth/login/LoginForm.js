@@ -17,7 +17,7 @@ import Iconify from '../../../components/Iconify';
 import { FormProvider, RHFTextField, RHFCheckbox } from '../../../components/hook-form';
 import { API_URL } from "../../../config"
 import { setUser } from "../state/userActions";
-
+import SnackbarBar from "../../../components/SnakBar"
 
 // ----------------------------------------------------------------------
 
@@ -25,6 +25,10 @@ export default function LoginForm() {
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [showNotification, setShowNotification] = useState(false);
+  const handleNotification = () => setShowNotification(!showNotification);
+  const [response , setResponse] = useState({})
 
   const [showPassword, setShowPassword] = useState(false);
   const [invalidCredentials, setInvalidCredentials] = useState(false)
@@ -63,13 +67,16 @@ export default function LoginForm() {
 
       dispatch(setUser(data.data))
       
-      navigate('/');
+      navigate('/info');
       
 
     } catch(error) {
 
       if(error.response.status === 403) {
         setInvalidCredentials(true)
+      } else {
+        handleNotification()
+        setResponse(error.response)
       }
 
     }
@@ -77,6 +84,8 @@ export default function LoginForm() {
   };
 
   return (
+    <>
+    
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
 
       
@@ -122,5 +131,7 @@ export default function LoginForm() {
         Login
       </LoadingButton>
     </FormProvider>
+    <SnackbarBar response={response} show={showNotification} handleClose={() => setShowNotification(false)} />
+    </>
   );
 }

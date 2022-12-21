@@ -1,12 +1,12 @@
 import * as Yup from 'yup';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 // form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 // @mui
-import { Stack, IconButton, Divider, Button, Box, Avatar } from '@mui/material';
+import { Stack, IconButton, Divider, Button, Box, Avatar, CircularProgress } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 // redux
@@ -33,12 +33,23 @@ export default function PostJob() {
   const accessToken = useSelector(accessTokenSelector);
 
   const navigate = useNavigate();
-
-  // const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  // const [educationalNumber, setEducationalNumber] = useState(2);
-  // const [experinceNumber, setExperinceNumber] = useState(1);
-
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [job, setJob] = useState({
+    title: '',
+    salary: {
+      start: 100,
+      end: 200,
+    },
+    jobDescription: '',
+    workhours: 8,
+    location: '',
+    experience: 1,
+    qualification: '',
+    careerLevel: '',
+    expiryDate: new Date(),
+    workType: 'On Site',
+  });
   const [skills, setSkills] = useState([]);
   const [desiredJobTitles, setDesiredJobTitles] = useState([]);
   const [postPicture, SetPostPicture] = useState('');
@@ -88,7 +99,6 @@ export default function PostJob() {
     },
     jobDescription: '',
     workhours: 8,
-    // skills: [],
     location: '',
     experience: 1,
     qualification: '',
@@ -115,25 +125,72 @@ export default function PostJob() {
 
     setLoading(true);
 
-    axios
-      .post(`${API_URL}/api/job/add`, values, {
-        headers: {
-          Authorization: accessToken,
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-      });
+    if (job._id) {
 
-    // navigate('/dashboard', { replace: true });
+      axios
+        .patch(`${API_URL}/api/job/update-specific/${job._id}`, values, {
+          headers: {
+            Authorization: accessToken,
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+
+    } else {
+      axios
+        .post(`${API_URL}/api/job/add`, values, {
+          headers: {
+            Authorization: accessToken,
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+    }
+
+    navigate('/jobs/your-jobs');
   };
 
-  return (
+  useEffect(() => {
+    const ID = window.location.href.split('/')[5];
+
+    if (ID) {
+      setFetchLoading(true);
+      axios
+        .get(`${API_URL}/api/job/get-specific/${ID}`, {
+          headers: {
+            Authorization: accessToken,
+          },
+        })
+        .then(({ data }) => {
+          console.log(data.data);
+          setJob(data.data);
+          setFetchLoading(false);
+          methods.reset(data.data);
+        })
+        .catch((error) => {
+          console.log(error);
+          setFetchLoading(false);
+        });
+    }
+  }, []);
+
+  return fetchLoading ? (
+    <Stack fullWidth sx={{ alignItems: 'center' }}>
+      <CircularProgress sx={{ height: '80px', width: '80px', color: 'primary.dark' }} />
+    </Stack>
+  ) : (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={3}>
         <Divider>Job Info</Divider>
@@ -204,7 +261,7 @@ export default function PostJob() {
 
         <Stack direction="row" justifyContent="center">
           <LoadingButton size="large" type="submit" variant="contained" fullWidth>
-            Post Job
+            { job._id ? "Update Job" : "Post Job"}
           </LoadingButton>
         </Stack>
       </Stack>
