@@ -77,9 +77,7 @@ export default function CandidateTestMoreMenu({ test }) {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {
-        test.attempted ||  moment(test.expiryDate).isAfter(moment()) 
-         ? null : (
+        {test.attempted || !moment(test.expiryDate).isAfter(moment()) ? null : (
           <MenuItem onClick={handleOpenModal} sx={{ color: 'success.main' }}>
             <ListItemIcon>
               <Iconify icon="ant-design:solution-outlined" width={24} height={24} sx={{ color: 'success.main' }} />
@@ -113,9 +111,20 @@ export default function CandidateTestMoreMenu({ test }) {
 
             <Stack spacing={3} sx={{ paddingTop: '20px' }}>
               <Stack direction={{ sm: 'row' }} spacing={2}>
-                <TextField name="pin" label="Test Pin" value={pin} onChange={handleChangePin} variant="outlined" fullWidth />
+                <TextField
+                  name="pin"
+                  label="Test Pin"
+                  value={pin}
+                  onChange={handleChangePin}
+                  variant="outlined"
+                  fullWidth
+                />
               </Stack>
-              {error ? <Typography variant="subtitle2" sx={{color: "error.main"}}>Incorrect Pin</Typography> : null}
+              {error ? (
+                <Typography variant="subtitle2" sx={{ color: 'error.main' }}>
+                  Incorrect Pin
+                </Typography>
+              ) : null}
 
               <LoadingButton
                 size="large"
